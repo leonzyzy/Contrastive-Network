@@ -4,7 +4,7 @@ from torch import einsum
 import torch.nn.functional as F
 from einops import rearrange
 import numpy as np
-from ContraLoss import MyContrastiveLoss
+from ContrastiveLoss import MyContrastiveLoss
 
 
 class MLP(nn.Module):

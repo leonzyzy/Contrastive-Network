@@ -5,7 +5,7 @@ from math import log
 
 class MyContrastiveLoss(nn.Module):
     def __init__(self, temperature=0.07):
-        super(SupervisedContrastiveLoss, self).__init__()
+        super(MyContrastiveLoss, self).__init__()
         self.temperature = temperature
 
     def forward(self, projections, targets):
@@ -25,9 +25,9 @@ class MyContrastiveLoss(nn.Module):
 
         # compute probability
         log_prob = -torch.log(exp_dot_tempered / (torch.sum(exp_dot_tempered * mask_anchor_out, dim=1, keepdim=True)))
-        supervised_contrastive_loss_per_sample = torch.sum(log_prob * mask_combined, dim=1) / cardinality_per_samples
+        loss = torch.sum(log_prob * mask_combined, dim=1) / cardinality_per_samples
 
         # find mean value of the total loss
-        supervised_contrastive_loss = torch.mean(supervised_contrastive_loss_per_sample)
+        loss = torch.mean(supervised_contrastive_loss_per_sample)
 
-        return supervised_contrastive_loss
+        return loss

@@ -13,7 +13,8 @@ def TotalLoss(preds, ground_truth, projections, lambda_value, temperature=0.7, w
     supcon_loss = SupCon(projections, ground_truth)
 
     # if using a convex linear combination
-    if convex is not None and (lambda_value >= 0) and (lambda_value <=1):
+    if convex is not None:
+      if lambda_value >= 0 and lambda_value <=1:
         loss = torch.tensor(1 - lambda_value, device=device) * ce_loss + torch.tensor(lambda_value,
                                                                                       device=device) * supcon_loss
     else:

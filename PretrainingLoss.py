@@ -3,7 +3,7 @@ import torch.nn as nn
 from math import log
 
 
-def ce_scl_loss(preds, ground_truth, projections, lambda_value, temperature=0.7, weight=None,
+def TotalLoss(preds, ground_truth, projections, lambda_value, temperature=0.7, weight=None,
                 convex=None, device='cuda'):
     if weight is not None:
         cross_entropy = torch.nn.CrossEntropyLoss(weight=weight)

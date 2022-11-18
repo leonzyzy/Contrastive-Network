@@ -5,6 +5,7 @@ from math import log
 
 def TotalLoss(preds, ground_truth, projections, lambda_value, temperature=0.7, weight=None,
                 convex=None, device='cuda'):
+    # add weight if data is imbalanced, use ratio.
     if weight is not None:
         cross_entropy = torch.nn.CrossEntropyLoss(weight=weight)
     else:
@@ -18,8 +19,7 @@ def TotalLoss(preds, ground_truth, projections, lambda_value, temperature=0.7, w
         loss = torch.tensor(1 - lambda_value, device=device) * ce_loss + torch.tensor(lambda_value,
                                                                                       device=device) * supcon_loss
     else:
-        loss = torch.tensor(lambda_value, device=device) * ce_loss + torch.tensor(lambda_value,
-                                                                                  device=device) * supcon_loss
+        loss = torch.tensor(lambda_value, device=device) * supcon_loss + ce_loss
     return loss
 
 

@@ -3,9 +3,28 @@ import torch.nn as nn
 from math import log
 
 
-class MyContrastiveLoss(nn.Module):
+def ce_scl_loss(preds, ground_truth, projections, lambda_value, temperature=0.7, weight=None,
+                convex=None, device='cuda'):
+    if weight is not None:
+        cross_entropy = torch.nn.CrossEntropyLoss(weight=weight)
+    else:
+        cross_entropy = torch.nn.CrossEntropyLoss()
+    ce_loss = cross_entropy(preds, ground_truth)
+    supcon_loss = SupCon(projections, ground_truth)
+
+    # if using a convex linear combination
+    if convex is not None and 0 <= lambda_value <= 1:
+        loss = torch.tensor(1 - lambda_value, device=device) * ce_loss + torch.tensor(lambda_value,
+                                                                                      device=device) * supcon_loss
+    else:
+        loss = torch.tensor(lambda_value, device=device) * ce_loss + torch.tensor(lambda_value,
+                                                                                  device=device) * supcon_loss
+    return loss
+
+
+class SupCon(nn.Module):
     def __init__(self, temperature=0.07):
-        super(MyContrastiveLoss, self).__init__()
+        super(SupCon, self).__init__()
         self.temperature = temperature
 
     def forward(self, projections, targets):
@@ -26,8 +45,6 @@ class MyContrastiveLoss(nn.Module):
         # compute probability
         log_prob = -torch.log(exp_dot_tempered / (torch.sum(exp_dot_tempered * mask_anchor_out, dim=1, keepdim=True)))
         loss = torch.sum(log_prob * mask_combined, dim=1) / cardinality_per_samples
+        loss_mean = torch.mean(loss)
 
-        # find mean value of the total loss
-        loss = torch.mean(supervised_contrastive_loss_per_sample)
-
-        return loss
+        return loss_mean

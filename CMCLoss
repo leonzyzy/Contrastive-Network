@@ -1,0 +1,64 @@
+import numpy as np
+import torch 
+import torch.nn as nn
+
+class CMCLoss(nn.Module):
+    def __init__(self, batch_size, temperature):
+        super(CMCLoss, self).__init__()
+        
+        # define the parameters
+        self.batch_size = batch_size
+        self.temperature = temperature
+        self.num_modalities = 3
+        
+        # define simiarlity measures and cross-entropy loss
+        self.mask = self.mask_correlated_samples()
+        self.similarity_f = nn.CosineSimilarity(dim=2)
+        self.criterion = nn.CrossEntropyLoss()
+
+    def mask_correlated_samples(self):
+        # define a masked correlated matrix
+        N = self.num_modalities * self.batch_size
+        mask = torch.ones((N, N),dtype=bool)
+        mask = mask.fill_diagonal_(0)
+        
+        # order your dataset as x11, y11, z11...
+        for i in range(self.num_modalities):
+            mask[i, self.num_modalities + i] = 0
+            mask[self.num_modalities + i, i] = 0
+            
+        return mask
+    
+    def forward(self, zi, zj, zk):
+        N = self.num_modalities * self.batch_size
+        z = torch.cat((zi, zj, zk), dim=0)
+
+        # compute similarity matrix
+        sim = self.similarity_f(z.unsqueeze(1), z.unsqueeze(0)) / self.temperature
+        
+        # get asymmetric similarity matrix
+        sim_ijk = torch.diag(sim, self.num_modalities)
+        sim_kij = torch.diag(sim, -self.num_modalities)
+        
+        # we have 2N samples
+        positive_samples = torch.cat((sim_ijk, sim_kij), dim=0).reshape(N, 1)
+        negative_samples = sim[self.mask].reshape(N, -1)
+        
+        # use cross-entropy loss 
+        labels = torch.from_numpy(np.array([0]*N)).reshape(-1).to(positive_samples.device).long() #.float()
+        logits = torch.cat((positive_samples, negative_samples), dim=1)
+        loss = self.criterion(logits, labels)
+        loss /= N
+        
+        return loss
+        
+
+if __name__=='main':
+    b = 2
+    t = 0.5
+    zi = torch.randn(b,4)
+    zj = torch.randn(b,4)
+    zk = torch.randn(b,4)
+    l_cmc = CMCLoss(b, t)
+    loss = l_cmc(zi, zj, zk)
+    print(loss)

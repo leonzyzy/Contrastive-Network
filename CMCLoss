@@ -1,60 +1,69 @@
 import numpy as np
 import torch 
 import torch.nn as nn
+import torch.nn.functional as F
+
+def device_as(t1, t2):
+   """
+   Moves t1 to the device of t2
+   """
+   return t1.to(t2.device)
 
 class CMCLoss(nn.Module):
     def __init__(self, batch_size, temperature, n):
         super(CMCLoss, self).__init__()
-        
-        # define the parameters
         self.batch_size = batch_size
         self.temperature = temperature
         self.num_modalities = n
-        
-        # define simiarlity measures and cross-entropy loss
-        self.mask = self.mask_correlated_samples()
+       
+        # define similarity function
         self.similarity_f = nn.CosineSimilarity(dim=2)
-        self.criterion = nn.CrossEntropyLoss()
+        
+        # define mask matrix
+        self.mask = self.mask_correlated_matrix()
 
-    def mask_correlated_samples(self):
-        # define a masked correlated matrix
-        N = self.num_modalities * self.batch_size
+    def mask_correlated_matrix(self):
+        """
+        Returns a mask to zero out correlated samples
+        """
+        N = self.batch_size * self.num_modalities
         mask = torch.ones((N, N),dtype=bool)
         mask = mask.fill_diagonal_(0)
         
-        # order your dataset as x11, y11, z11...
-        for i in range(self.num_modalities):
-            mask[i, self.num_modalities + i] = 0
-            mask[self.num_modalities + i, i] = 0
-            
+        for i in range(N):
+            for j in range(N):
+                if (j-i) % self.num_modalities == 0:
+                    mask[i,j] = 0
+                if (i-j) % self.num_modalities == 0:
+                    mask[i,j] = 0
         return mask
-    
+
     def forward(self, modalities):
+        N = self.batch_size * self.num_modalities
+        representations = torch.cat(modalities, dim=0)
+        sim = self.similarity_f(representations.unsqueeze(1), representations.unsqueeze(0)) / self.temperature
 
-        N = self.num_modalities * self.batch_size
-        z = torch.cat(modalities, dim=0)
-        # compute similarity matrix
-        sim = self.similarity_f(z.unsqueeze(1), z.unsqueeze(0)) / self.temperature
-        # get asymmetric similarity matrix
-        sim_ijk = torch.diag(sim, self.num_modalities)
-        sim_kij = torch.diag(sim, -self.num_modalities)
-        # we have 2N samples
-        positive_samples = torch.cat((sim_ijk, sim_kij), dim=0).reshape(N, 1)
-        negative_samples = sim[self.mask].reshape(N, -1)
-        # use cross-entropy loss 
-        labels = torch.from_numpy(np.array([0]*N)).reshape(-1).to(positive_samples.device).long() #.float()
-        logits = torch.cat((positive_samples, negative_samples), dim=1)
-        loss = self.criterion(logits, labels)
-        loss /= N
-        return loss
+        # get all samples
+        denominator = device_as(self.mask, sim) * torch.exp(sim/self.temperature)
         
+        # get positive samples
+        positive_index = sim[self.mask.fill_diagonal_(1)==0]
+        positive_samples = positive_index.reshape(denominator.shape[0], -1)
+        nominator = torch.sum(torch.exp(positive_samples / self.temperature), dim = 1)
 
-if __name__=='main':
-    b = 2
-    t = 0.5
-    zi = torch.randn(b,4)
-    zj = torch.randn(b,4)
-    zk = torch.randn(b,4)
-    l_cmc = CMCLoss(b, t,4)
-    loss = l_cmc([zi,zj,zk,zk])
+        # compute loss
+        all_losses = -torch.log(nominator / torch.sum(denominator, dim=1))
+        loss = torch.sum(all_losses) / N            
+        return loss
+
+if __name__ == 'main':
+    b = 50
+    cmc = CMCLoss(50, 0.5, 5)
+    z1 = torch.randn(b,12)
+    z2 = torch.randn(b,12)
+    z3 = torch.randn(b,12)
+    z4 = torch.randn(b,12)
+    z5 = torch.randn(b,12)
+    modalities = [z1,z2,z3, z4, z5]
+    loss = cmc(modalities)
     print(loss)

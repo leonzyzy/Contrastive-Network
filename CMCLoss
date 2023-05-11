@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# The batch size must be divided by your total dataset. 
+
 def device_as(t1, t2):
    """
    Moves t1 to the device of t2

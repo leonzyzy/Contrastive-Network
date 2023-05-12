@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from math import log
 
+# This loss is just for us to test, not training loss.
 
 def TotalLoss(preds, ground_truth, projections, lambda_value, temperature=0.7, weight=None,
                 convex=None, device='cuda'):

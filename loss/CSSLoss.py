@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from pytorch_metric_learning import losses
 
+# cross-subject-similarity loss/ supervised contrastive loss
 class CSSLoss(nn.Module):
     def __init__(self, temperature):
         super(CSSLoss, self).__init__()

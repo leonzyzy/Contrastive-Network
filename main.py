@@ -96,7 +96,7 @@ def test_model(test_loader, m1, m2, m3, m4, m5):
             x4 = x4.to(device)
             y = y.to(device)
 
-        # forward pass
+            # forward pass
             f1 = m1(x1)
             f2 = m2(x2)
             f3 = m3(x3)

@@ -136,8 +136,8 @@ if __name__=='main':
         "k": 10,
         "a": 1,
         "learning_rate": 0.001,
-        "pretrain_epochs": 10,
-        "finetune_epochs": 10,
+        "pretrain_epochs": 1000,
+        "finetune_epochs": 100,
         "lambda": 0.001
     }
     # get torch seed

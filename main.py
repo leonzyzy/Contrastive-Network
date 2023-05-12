@@ -81,41 +81,42 @@ def test_model(test_loader, m1, m2, m3, m4, m5):
     FN = 0
     probs = []
     y_true = []
-    for _, (x1, x2, x3, x4, y) in enumerate(test_loader):
-        m1.eval()
-        m2.eval()
-        m3.eval()
-        m4.eval()
-        m5.eval()
-        
-        # move data to GPU
-        x1 = x1.to(device)
-        x2 = x2.to(device)
-        x3 = x3.to(device)
-        x4 = x4.to(device)
-        y = y.to(device)
-
-       # forward pass
-        f1 = m1(x1)
-        f2 = m2(x2)
-        f3 = m3(x3)
-        #im = image_encoder(x4)
-        f4 = m4(x4)
+    with torch.no_grad():
+        for _, (x1, x2, x3, x4, y) in enumerate(test_loader):
+            m1.eval()
+            m2.eval()
+            m3.eval()
+            m4.eval()
+            m5.eval()
             
-        # concat all features
-        fused_vecs = torch.cat((f1, f2, f3, f4), dim=1)
-        prob = m5(fused_vecs)
+            # move data to GPU
+            x1 = x1.to(device)
+            x2 = x2.to(device)
+            x3 = x3.to(device)
+            x4 = x4.to(device)
+            y = y.to(device)
 
-        # save the probability and true label
-        probs.append(prob.cpu().item())
-        y_true.append(y.cpu().item())
-        
-        # calculate the accuracy, sensitivity, specificity
-        predicted = torch.round(prob)
-        TP += ((predicted == 1) & (y.unsqueeze(1) == 1)).sum().item()
-        TN += ((predicted == 0) & (y.unsqueeze(1) == 0)).sum().item()
-        FP += ((predicted == 1) & (y.unsqueeze(1) == 0)).sum().item()
-        FN += ((predicted == 0) & (y.unsqueeze(1) == 1)).sum().item()
+        # forward pass
+            f1 = m1(x1)
+            f2 = m2(x2)
+            f3 = m3(x3)
+            #im = image_encoder(x4)
+            f4 = m4(x4)
+                
+            # concat all features
+            fused_vecs = torch.cat((f1, f2, f3, f4), dim=1)
+            prob = m5(fused_vecs)
+
+            # save the probability and true label
+            probs.append(prob.cpu().item())
+            y_true.append(y.cpu().item())
+            
+            # calculate the accuracy, sensitivity, specificity
+            predicted = torch.round(prob)
+            TP += ((predicted == 1) & (y.unsqueeze(1) == 1)).sum().item()
+            TN += ((predicted == 0) & (y.unsqueeze(1) == 0)).sum().item()
+            FP += ((predicted == 1) & (y.unsqueeze(1) == 0)).sum().item()
+            FN += ((predicted == 0) & (y.unsqueeze(1) == 1)).sum().item()
         
     test_sensitivity = TP / (TP + FN)
     test_specificity = TN / (TN + FP)
@@ -135,8 +136,8 @@ if __name__=='main':
         "k": 10,
         "a": 1,
         "learning_rate": 0.001,
-        "pretrain_epochs": 1000,
-        "finetune_epochs": 50,
+        "pretrain_epochs": 10,
+        "finetune_epochs": 10,
         "lambda": 0.001
     }
     # get torch seed

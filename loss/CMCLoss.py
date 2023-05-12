@@ -9,6 +9,7 @@ def device_as(t1, t2):
    """
    return t1.to(t2.device)
 
+# cross-modal-complementary loss
 class CMCLoss(nn.Module):
     def __init__(self, batch_size, temperature, n):
         super(CMCLoss, self).__init__()

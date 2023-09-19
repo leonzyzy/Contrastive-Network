@@ -58,3 +58,4 @@ class TripletLoss(nn.Module):
         loss = torch.mean(torch.relu(pos_dist - neg_dist + self.margin))
         
         return loss
+        

@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 19 12:25:43 2020
-
-@author: niharika-shimona
-"""
-
 import torch
 from torch.autograd import Variable
 

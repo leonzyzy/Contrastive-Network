@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Aug 19 12:07:46 2020
-
-@author: niharika-shimona
-"""
-
-
-
 import torch
 
 import numpy as np

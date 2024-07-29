@@ -142,3 +142,4 @@ def train(model, dataloader, criterion, optimizer, device):
     epoch_loss = running_loss / len(dataloader.dataset)
     return epoch_loss
 
+

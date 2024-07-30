@@ -55,49 +55,47 @@ class SupervisedMoCo(nn.Module):
         return loss
 
 def train_supervised_moco(moco, data_loader, num_epochs=10, lr=1e-3):
-          optimizer = optim.Adam(moco.parameters(), lr=lr)
-          criterion = nn.CrossEntropyLoss()
-          
-          for epoch in range(num_epochs):
-              moco.encoder_q.train()
-              for (x1, x2, x3, y) in data_loader:
-                  optimizer.zero_grad()
-                  
-                  # Flatten the input tensors
-                  x1, x2, x3 = x1.view(x1.size(0), -1), x2.view(x2.size(0), -1), x3.view(x3.size(0), -1)
-                  
-                  # Forward pass through the model
-                  q1, logits_q1, k1 = moco(x1, x1)
-                  q2, logits_q2, k2 = moco(x2, x2)
-                  q3, logits_q3, k3 = moco(x3, x3)
-                  
-                  # Compute contrastive loss
-                  contrastive_loss1 = moco.compute_contrastive_loss(q1, k1)
-                  contrastive_loss2 = moco.compute_contrastive_loss(q2, k2)
-                  contrastive_loss3 = moco.compute_contrastive_loss(q3, k3)
-                  
-                  contrastive_loss = (contrastive_loss1 + contrastive_loss2 + contrastive_loss3) / 3
-                  
-                  # Compute classification loss
-                  class_loss1 = criterion(logits_q1, y)
-                  class_loss2 = criterion(logits_q2, y)
-                  class_loss3 = criterion(logits_q3, y)
-                  
-                  class_loss = (class_loss1 + class_loss2 + class_loss3) / 3
-                  
-                  # Total loss
-                  total_loss = contrastive_loss + class_loss
-                  
-                  # Backward pass and optimization
-                  total_loss.backward()
-                  optimizer.step()
-                  
-                  # Update queue
-                  moco.update_queue(k1)
-                  moco.update_queue(k2)
-                  moco.update_queue(k3)
+    optimizer = optim.Adam(moco.parameters(), lr=lr)
+    criterion = nn.CrossEntropyLoss()
+      
+    for epoch in range(num_epochs):
+        moco.encoder_q.train()
+        for (x1, x2, x3, y) in data_loader:
+            optimizer.zero_grad()
               
-              print(f"Epoch [{epoch+1}/{num_epochs}], Total Loss: {total_loss.item():.4f}")
+            # Flatten the input tensors
+            x1, x2, x3 = x1.view(x1.size(0), -1), x2.view(x2.size(0), -1), x3.view(x3.size(0), -1)
+              
+            # Forward pass through the model
+            q1, logits_q1, k1 = moco(x1, x1)
+            q2, logits_q2, k2 = moco(x2, x2)
+            q3, logits_q3, k3 = moco(x3, x3)
+              
+            # Compute contrastive loss
+            contrastive_loss1 = moco.compute_contrastive_loss(q1, k1)
+            contrastive_loss2 = moco.compute_contrastive_loss(q2, k2)
+            contrastive_loss3 = moco.compute_contrastive_loss(q3, k3)
+              
+            contrastive_loss = (contrastive_loss1 + contrastive_loss2 + contrastive_loss3) / 3
+              
+            # Compute classification loss
+            class_loss1 = criterion(logits_q1, y)
+            class_loss2 = criterion(logits_q2, y)
+            class_loss3 = criterion(logits_q3, y)
+              
+            class_loss = (class_loss1 + class_loss2 + class_loss3) / 3
+              
+            # Total loss
+            total_loss = contrastive_loss + class_loss
+              
+            # Backward pass and optimization
+            total_loss.backward()
+            optimizer.step()
+              
+            # Update queue
+            moco.update_queue(k1)
+            moco.update_queue(k2)
+            moco.update_queue(k3)
 
 if __name__=='main':  
     # Random modalities and labels

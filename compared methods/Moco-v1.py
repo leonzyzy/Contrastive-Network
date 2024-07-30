@@ -111,7 +111,7 @@ if __name__=='main':
     data_loader = torch.utils.data.DataLoader(data, batch_size=32, shuffle=True)
     
     # Initialize and train the model
-    encoder = SimpleBackbone(input_dim=87*87, hidden_dim=128, num_classes=2)
+    encoder = FusionNet(#customize....here...#)
     moco = SupervisedMoCo(encoder)
     train_supervised_moco(moco, data_loader)
   

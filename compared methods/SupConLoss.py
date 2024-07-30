@@ -26,3 +26,5 @@ class SupConLoss(nn.Module):
         loss = -torch.log(pos_sim.sum(dim=1) / exp_sim.sum(dim=1) + 1e-8)
         
         return loss.mean()
+
+

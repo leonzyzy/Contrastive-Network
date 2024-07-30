@@ -112,8 +112,7 @@ def train_moco_v2(moco, data_loader, num_epochs=10, lr=1e-3):
             moco.update_queue(z_k2)
             moco.update_queue(z_k3)
             moco.update_encoder()
-        
-        print(f"Epoch [{epoch+1}/{num_epochs}], Total Loss: {total_loss.item():.4f}")
+
 if __name__=='main':  
   # Random modalities and labels
   x1 = torch.randn(100, 87 * 87)
